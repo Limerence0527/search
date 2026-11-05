@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>比價小幫手</title>
+  <meta name="description" content="輸入商品名稱，AI 幫你比較蝦皮、momo、PChome 等平台價格，找出最便宜的購買管道。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <h1 class="logo">🔍 比價小幫手</h1>
+      <button id="settingsBtn" class="ghost" type="button">⚙️ AI 設定</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <form id="searchForm" class="search" autocomplete="off">
+      <input id="q" type="search" placeholder="輸入商品名稱，例如：AirPods Pro 2、Dyson V12、iPhone 17 256G" required>
+      <button type="submit" id="searchBtn">搜尋比價</button>
+    </form>
+    <p id="keyHint" class="hint"></p>
+
+    <section id="quickLinks" class="quick" hidden>
+      <h2>直接到各平台搜尋</h2>
+      <div id="platformLinks" class="chips"></div>
+    </section>
+
+    <section id="status" class="status" hidden></section>
+
+    <section id="aiResult" hidden>
+      <div id="summary" class="summary"></div>
+      <div class="toolbar">
+        <label>排序
+          <select id="sortSel">
+            <option value="price-asc">價格：低 → 高</option>
+            <option value="price-desc">價格：高 → 低</option>
+          </select>
+        </label>
+        <div id="platformFilter" class="chips small"></div>
+      </div>
+      <div id="cards" class="cards"></div>
+      <p class="disclaimer">※ 價格、規格由 AI 透過網路搜尋整理，可能與實際頁面有落差（特價、運費、優惠券、庫存等），下單前請點進連結確認。</p>
+    </section>
+  </main>
+
+  <dialog id="settingsDlg">
+    <form method="dialog" id="settingsForm">
+      <h2>AI 設定</h2>
+      <p class="muted">使用 Anthropic Claude API（含網路搜尋）自動比價。金鑰只會存在你這台瀏覽器的 localStorage，直接送到 api.anthropic.com，不會經過其他伺服器。</p>
+      <label>Claude API Key
+        <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off">
+      </label>
+      <label>模型
+        <select id="modelSel">
+          <option value="claude-opus-5-5">Claude Opus 5.5（最準確）</option>
+          <option value="claude-sonnet-5-5">Claude Sonnet 5.5（較省錢、較快）</option>
+        </select>
+      </label>
+      <label>每次最多搜尋次數
+        <input id="maxUses" type="number" min="1" max="15" value="6">
+      </label>
+      <p class="muted">沒有金鑰也能用：會提供各購物平台的搜尋連結。到 <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> 申請金鑰。</p>
+      <div class="dlg-actions">
+        <button type="button" id="clearKey" class="ghost">清除金鑰</button>
+        <button value="save" id="saveSettings">儲存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="wrap foot">
+    <span>以 GitHub Pages 架設 · 本站不販售商品，連結導向各平台</span>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

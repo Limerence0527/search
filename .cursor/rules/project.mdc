@@ -32,6 +32,18 @@ alwaysApply: true
 - 不可捏造商品、價格或連結；所有外部資料視為不可信。
 - 修改後執行 `npm run typecheck` 與 `npm run build` 確認通過。
 
+## 規則優先順序
+`.cursor/rules/acr-*.mdc` 是從 awesome-cursorrules 原文照錄的通用規則，只作為一般寫法參考。**與本專案規則衝突時，一律以本檔與其他非 `acr-` 規則為準**。已知衝突：
+- 「優先使用 Server Components / SSR、在伺服器端抓資料、Server Actions、伺服器端驗證」→ 本專案是靜態匯出，**沒有伺服器**。互動頁面用 `"use client"`，資料由前端 `fetch` 呼叫 `backend/worker.mjs`。
+- 「用 `next/image` 最佳化、WebP」→ 靜態匯出關閉了最佳化；商品圖來自外部商家，用一般 `<img>`。
+- 「Zod、nuqs、Suspense 包 client component、dynamic import」→ 目前未安裝，除非使用者要求，不要為此新增套件。
+- 「tailwind.config.js、purge 設定」→ 本專案用 Tailwind v4，設定寫在 `app/globals.css` 的 `@theme`，沒有 config 檔。
+- 「檔案放在 `src/`」→ 本專案沒有 `src/`，直接用 `app/`、`components/`、`lib/`。
+- 「Builder / Repository / Factory / 依賴注入、`types/` 目錄、barrel exports」→ 專案很小，不要為此重構；型別就近定義。
+- 「撰寫單元測試（React Testing Library）」→ 目前沒有測試框架；新增前先徵求使用者同意。
+- 「先寫詳細虛擬碼並等待確認」→ 小改動直接做；大改動先簡述計畫即可。
+- 視覺（顏色、圓角、陰影、字重）一律依 `design.mdc`，不採用通用規則的預設風格。
+
 ## 溝通
 - 介面文字、程式註解與回覆使用者一律使用**繁體中文（台灣用語）**。
 - 修改前先閱讀相關檔案；改動保持精簡，不做與需求無關的重構。

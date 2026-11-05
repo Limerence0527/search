@@ -32,6 +32,12 @@ alwaysApply: true
 - 不可捏造商品、價格或連結；所有外部資料視為不可信。
 - 修改後執行 `npm run typecheck` 與 `npm run build` 確認通過。
 
+## AI 工具與畫面檢查
+- 專案設定已讓 Claude Code（`.mcp.json`）、Cursor（`.cursor/mcp.json`）、OpenCode（`opencode.json`）載入 **Playwright MCP**；Aider（`.aider.conf.yml`）與 OpenCode 會自動讀取本規範。
+- **改到畫面後要自我檢查**：執行 `npm run dev`，用 Playwright MCP 開啟 `http://localhost:3000/search/`（含 `?q=AirPods Pro 2` 的搜尋結果），分別在桌機（1280×900）與手機（390×844）截圖，對照 `design.mdc` 檢查：背景是否為暖米色而非純白、文字非純黑、無高對比粗框與重陰影、留白足夠、手機無水平捲動、無 console 錯誤。發現問題先修正再回報。
+- **screenshot-to-code 等工具產生的 HTML + Tailwind**：只當版面參考，不可直接貼進專案。要改寫成 `app/`／`components/` 下的 TSX 元件、改用 `components/ui/` 既有元件與 `lucide-react` 圖示、顏色與圓角換成 `design.mdc` 的規範值，並移除其中的 CDN `<script>`／`<link>`、inline 事件與假資料。
+- **不可**把任何 token（例如 GitHub MCP 的 PAT）寫進 `.mcp.json`、`.cursor/mcp.json`、`opencode.json` 等會提交的檔案；需要 token 的 MCP 一律設定在使用者自己的全域設定。
+
 ## 規則優先順序
 `.cursor/rules/acr-*.mdc` 是從 awesome-cursorrules 原文照錄的通用規則，只作為一般寫法參考。**與本專案規則衝突時，一律以本檔與其他非 `acr-` 規則為準**。已知衝突：
 - 「優先使用 Server Components / SSR、在伺服器端抓資料、Server Actions、伺服器端驗證」→ 本專案是靜態匯出，**沒有伺服器**。互動頁面用 `"use client"`，資料由前端 `fetch` 呼叫 `backend/worker.mjs`。

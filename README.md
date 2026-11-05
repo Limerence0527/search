@@ -40,3 +40,31 @@ npm run typecheck
 目前保留從分支根目錄部署的方式。提交發佈版本時，將 `out/` 的內容複製到專案根目錄（包含 `index.html`、`_next/`、`404.html` 等）並保留 `.nojekyll`；不要只更新來源碼。
 
 舊有 `.github/workflows/pages.yml` 只監聽 main 分支，並非目前預設分支的部署來源。
+
+## AI 開發工具
+
+專案規範在 `AI_INSTRUCTIONS.md`（設計 + 技術），各工具會自動讀取：
+
+| 工具 | 設定檔 | 內容 |
+|---|---|---|
+| Claude Code | `CLAUDE.md`、`.mcp.json` | 讀取規範；啟用 Playwright MCP |
+| Cursor | `.cursor/rules/`、`.cursor/mcp.json` | 分檔規則；啟用 Playwright MCP |
+| OpenCode | `opencode.json` | 讀取規範；啟用 Playwright MCP |
+| Aider | `.aider.conf.yml` | 每次啟動以唯讀載入規範（Aider 預設會自動 commit） |
+| ChatGPT / Claude 網頁版 | `AI_INSTRUCTIONS.md` | 全文貼在提示詞最前面 |
+
+**Playwright MCP**：讓 AI 改完畫面後自己開瀏覽器、截圖檢查排版（需要 Node.js；預設使用本機 Chrome）。第一次啟用時，Claude Code／Cursor 會詢問是否信任專案的 MCP 設定。
+
+**GitHub MCP**（讀 Issue、PR、分支）需要個人存取權杖（PAT），**不要放進專案**，請設定在自己的全域設定：
+
+```bash
+claude mcp add-json github '{"type":"http","url":"https://api.githubcopilot.com/mcp","headers":{"Authorization":"Bearer 你的_GITHUB_PAT"}}' --scope user
+```
+
+Cursor 則寫在 `~/.cursor/mcp.json`（全域，不是專案內的 `.cursor/mcp.json`）：
+
+```json
+{ "mcpServers": { "github": { "url": "https://api.githubcopilot.com/mcp/", "headers": { "Authorization": "Bearer 你的_GITHUB_PAT" } } } }
+```
+
+**screenshot-to-code**：截圖喜歡的版面產生 HTML + Tailwind 後，只當參考，請 AI 依 `AI_INSTRUCTIONS.md`「AI 工具與畫面檢查」改寫成本專案的 TSX 元件與設計規範，不要直接貼上。

@@ -1,0 +1,2 @@
+# Aider 設定：每次啟動都以唯讀方式載入專案規範（設計 + 技術）
+read: [AI_INSTRUCTIONS.md]

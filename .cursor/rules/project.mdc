@@ -1,0 +1,37 @@
+---
+description: 比價小幫手專案總覽、部署方式與硬性限制（每次對話都套用）
+globs:
+alwaysApply: true
+---
+
+# 專案：比價小幫手
+
+台灣購物比價網站。輸入商品名稱後，顯示 PChome、momo、Yahoo 與蝦皮（經飛比價格收錄）的商品圖片與價格預覽，預設以嚴格比對濾掉配件與不同型號，並提供露天、BigGo、Google 購物等平台的搜尋入口。
+
+## 技術棧
+- Next.js（App Router）+ React + TypeScript（strict）
+- Tailwind CSS v4（`app/globals.css`，以 `@theme inline` 定義設計變數）
+- shadcn/ui 元件模式（`components/ui/`，用 `@/lib/utils` 的 `cn()` 合併 class）
+- 圖示：`lucide-react`
+- 商品資料後端：`backend/worker.mjs`（Worker ESM），前端在 `components/product-results.tsx` 的 `API` 常數呼叫它
+
+## 目錄
+- `app/`：`layout.tsx`、`page.tsx`、`globals.css`
+- `components/`：頁面元件；`components/ui/`：shadcn 基礎元件
+- `lib/utils.ts`：`cn()`
+- `backend/worker.mjs`：抓取公開商品資料的 API
+- 根目錄的 `index.html`、`404.html`、`_next/`、`_not-found/`、`404/`、`*.txt` 是 **`npm run build` 產生的檔案**（從 `out/` 複製），**不可手動修改**
+
+## 部署（GitHub Pages）
+- `next.config.ts`：`output: "export"`、`basePath: "/search"`、`trailingSlash: true`、`images.unoptimized: true`
+- 發佈流程：`npm run build` → 把 `out/` 內容複製到專案根目錄（保留 `.nojekyll`）→ 提交。只改原始碼而不更新產物，網站不會變。
+
+## 硬性限制
+- 必須維持可靜態匯出：不可使用 Server Actions、Route Handlers（`app/api`）、`cookies()`/`headers()` 等動態伺服器功能、需要伺服器的 `next/image` 最佳化。
+- **不可**把任何 API 金鑰、token 寫進程式碼或提交（`.env*` 已在 `.gitignore`）。
+- 不可捏造商品、價格或連結；所有外部資料視為不可信。
+- 修改後執行 `npm run typecheck` 與 `npm run build` 確認通過。
+
+## 溝通
+- 介面文字、程式註解與回覆使用者一律使用**繁體中文（台灣用語）**。
+- 修改前先閱讀相關檔案；改動保持精簡，不做與需求無關的重構。

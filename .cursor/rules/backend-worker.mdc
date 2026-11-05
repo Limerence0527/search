@@ -1,0 +1,34 @@
+---
+description: backend/worker.mjs 商品資料 API 規範
+globs: backend/**
+alwaysApply: false
+---
+
+# 後端 Worker 規範
+
+## 介面
+- `GET /api/search?q=商品名稱&page=1`；`q` 1～100 字、`page` 1～5，否則回 400。
+- 回應格式必須與前端 `components/product-results.tsx` 的型別一致：
+  `{ query, page, items: Product[], sources: { name, status: "ok" | "empty" | "unavailable", count }[], fetchedAt, disclaimer }`
+  `Product = { id, title, price, image, url, platform, note, matchesQuery, seller?, via? }`。改欄位時前後端一起改。
+- 只允許 `GET`、`OPTIONS`；CORS 只開放 `ORIGIN`（`https://limerence0527.github.io`）。
+
+## 抓取來源
+- 每個來源各自一個 job，用 `Promise.allSettled`；單一來源失敗只標記 `unavailable`，不影響其他來源。全部失敗才回 502。
+- `fetch` 一律加 `AbortSignal.timeout(...)` 並限制回應大小。
+- momo / Yahoo 從頁面的 JSON-LD（`schemaProducts()`）取資料；PChome 用其搜尋 JSON。只收價格 > 0、幣別 TWD、有名稱與網址的商品。
+- 蝦皮：不直接抓蝦皮，而是解析飛比價格搜尋頁中收錄的蝦皮商品（`shopeeProducts()`）；連結必須是 `https://feebee.com.tw/rd/` 開頭，`via: "飛比價格"`，並在 `note`／免責聲明說明非蝦皮即時報價。缺貨（`stockout`）不收。
+- HTML 屬性與文字先經 `decodeHtml()` 解碼。
+
+## 商品比對
+- 每筆商品附 `matchesQuery = matchesProduct(q, title)`；前端預設「嚴格比對」只顯示 `matchesQuery === true`，使用者可切換顯示全部。
+- `normalizeProductText()` 統一全半形、大小寫、中英品牌名（戴森→dyson 等）與中文數字；新增品牌別名加在這裡。
+- 除非查詢本身就是配件，否則排除配件、副廠／相容品、組合包；指定型號時（例如 AirPods Pro 2、iPhone 17 Pro）不可混入不同世代或不同變體（Pro / Max / Plus / mini / Air）。
+- 修改比對規則時，用實際商品標題舉例驗證「該留的有留、該濾的有濾」，避免誤刪正品。
+- 所有網址、圖片網址都經 `safeUrl()`（只允許 https）；文字去除 HTML 標籤並截斷長度。
+- 結果依來源交錯排列，避免單一商城佔滿版面。
+
+## 快取與限制
+- 記憶體快取 10 分鐘、最多 100 筆；全部來源失敗時不快取並回 `Cache-Control: no-store`。
+- 不需要也不可加入任何模型或搜尋 API 金鑰；若未來需要密鑰，使用部署平台的環境變數，不可寫進程式碼。
+- 尊重來源網站的使用條款與流量；不要加大量平行請求或繞過防護。

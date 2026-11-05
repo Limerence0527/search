@@ -1,0 +1,31 @@
+---
+description: Next.js / React / TypeScript / shadcn 元件寫法
+globs: app/**/*.tsx, components/**/*.tsx, lib/**/*.ts
+alwaysApply: false
+---
+
+# Next.js / React 規範
+
+## 元件
+- 有狀態、事件、`useEffect`、`window`/`localStorage` 的元件，檔案開頭加 `"use client"`。
+- 匯入一律用 `@/` 別名（例如 `@/components/ui/button`）。
+- 基礎元件（Button、Input、Badge、Card…）放 `components/ui/`，沿用 shadcn 寫法：`cva` 定義 variants、`cn()` 合併 class、支援 `asChild`（`@radix-ui/react-slot`）。新增元件前先看 `components/ui/` 是否已有。
+- 圖示用 `lucide-react`，不要再引入其他圖示庫。
+
+## TypeScript
+- strict 模式；不要用 `any`，外部 API 回應要先定義型別（參考 `components/product-results.tsx` 的 `Product`、`Source`、`Result`；選填欄位如 `seller`、`via` 要處理不存在的情況）並驗證欄位（例如 `Array.isArray(data.items)`）。
+
+## 資料請求
+- 在 client 端用 `fetch` + `AbortController`，設定逾時，`useEffect` cleanup 中 abort，避免卸載後 setState。
+- `credentials: "omit"`；錯誤顯示友善的繁體中文訊息並提供「重新搜尋」。
+- 不可在前端放任何金鑰。
+
+## 外部連結與圖片
+- 外部連結：`target="_blank" rel="noopener noreferrer"`。
+- 商品圖片：用一般 `<img>`（靜態匯出），加 `loading="lazy"`、`referrerPolicy="no-referrer"`、`onError` 時顯示佔位（`ImageOff` 圖示 + 文字）。
+
+## 無障礙
+- 互動元素用 `<button>` / `<a>`；只有圖示的按鈕要 `aria-label`。
+- 篩選按鈕用 `aria-pressed`；載入用 `role="status"`、錯誤用 `role="alert"`、結果數用 `aria-live="polite"`。
+- 尊重 `prefers-reduced-motion`。
+- 網址參數 `?q=` 與 Ctrl/Cmd + K 聚焦搜尋要保留。

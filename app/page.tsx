@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProductResults } from "@/components/product-results";
 
 const platforms = [
  {id:"shopee", name:"蝦皮購物", en:"SHOPEE", mark:"蝦", color:"#fb775e", bg:"#fb775e12", kind:"商城", desc:"從日常小物到人氣好物", url:(q:string)=>"https://shopee.tw/search?keyword="+q},
@@ -18,7 +19,7 @@ const platforms = [
 ];
 const examples=["AirPods Pro 2","Dyson V12","Switch 2","象印 保溫瓶 480ml"];
 export default function Home() {
- const [input,setInput]=useState(""); const [query,setQuery]=useState(""); const [filter,setFilter]=useState("全部"); const [error,setError]=useState(""); const inputRef=useRef<HTMLInputElement>(null); const resultsRef=useRef<HTMLElement>(null);
+ const [input,setInput]=useState(""); const [query,setQuery]=useState(""); const [filter,setFilter]=useState("全部"); const [error,setError]=useState(""); const inputRef=useRef<HTMLInputElement>(null); const resultsRef=useRef<HTMLDivElement>(null);
  useEffect(()=>{ const q=new URLSearchParams(location.search).get("q")?.trim(); if(q){setInput(q);setQuery(q);} ["cp.apiKey","cp.model","cp.maxUses"].forEach(k=>{try{localStorage.removeItem(k)}catch{}}); const key=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();inputRef.current?.focus()}};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key); },[]);
  function search(value:string){const q=value.trim();if(!q){setError("先輸入想找的商品名稱");inputRef.current?.focus();return;}setError("");setInput(q);setQuery(q);setFilter("全部");const u=new URL(location.href);u.searchParams.set("q",q);history.replaceState(null,"",u);requestAnimationFrame(()=>resultsRef.current?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"start"}));}
  const visible=platforms.filter(p=>filter==="全部"||p.kind===filter);
@@ -36,7 +37,7 @@ export default function Home() {
     <div className="relative mx-auto max-w-4xl px-5 pb-16 pt-16 text-center sm:px-8 sm:pb-20 sm:pt-22">
      <Badge className="mb-7 border-violet-300/15 bg-violet-400/5 text-violet-200"><span className="size-1.5 rounded-full bg-violet-300"/>少一點切換，多一點選擇 <ArrowRight size={12}/></Badge>
      <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">好東西，值得<br className="sm:hidden"/><span className="bg-gradient-to-r from-violet-200 to-violet-400 bg-clip-text text-transparent">好價格。</span></h1>
-     <p className="mx-auto mb-9 mt-5 max-w-lg text-sm leading-7 text-muted-foreground sm:text-base">從一個商品名稱開始，探索各大購物平台。<br/>把選擇放在一起，找到你的理想入手方式。</p>
+     <p className="mx-auto mb-9 mt-5 max-w-lg text-sm leading-7 text-muted-foreground sm:text-base">從一個商品名稱開始，探索各大購物平台。<br/>把選擇放在一起，比較商品圖片與售價，找到理想入手方式。</p>
      <form onSubmit={e=>{e.preventDefault();search(input)}} className="search-glow mx-auto flex max-w-2xl items-center gap-2 rounded-2xl border border-white/15 bg-[#15141c] p-2 pl-4 shadow-2xl transition-shadow">
       <Search size={21} className="shrink-0 text-muted-foreground" aria-hidden/>
       <Input ref={inputRef} aria-label="搜尋商品名稱" aria-invalid={!!error} aria-describedby={error?"search-error":undefined} type="search" value={input} onChange={e=>{setInput(e.target.value);setError("")}} placeholder="搜尋品牌、商品或型號…" className="h-12 border-0 px-1 text-sm shadow-none focus-visible:ring-0 sm:text-base"/>
@@ -48,12 +49,13 @@ export default function Home() {
      <div className="mt-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-xs text-muted-foreground">{["8 個搜尋入口","無需註冊","直接前往原始賣場"].map(s=><span key={s} className="flex items-center gap-1.5"><Check size={13} className="text-violet-300/75"/>{s}</span>)}</div>
     </div>
    </section>
-   <section id="platforms" ref={resultsRef} className="mx-auto max-w-7xl scroll-mt-6 px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="platform-title">
+   <div ref={resultsRef} className="scroll-mt-6"><ProductResults query={query}/></div>
+   <section id="platforms" className="mx-auto max-w-7xl scroll-mt-6 px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="platform-title">
     <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
      <div><p className="mb-2 text-[10px] font-medium tracking-[.24em] text-violet-300">EXPLORE THE POSSIBILITIES</p><h2 id="platform-title" className="text-xl font-semibold tracking-tight sm:text-2xl">{query?<><span className="text-muted-foreground">搜尋 </span>「{query}」</>:"你的購物探索，從這裡開始"}</h2><p className="mt-2 text-sm text-muted-foreground">{query?"選擇平台，在新分頁查看實際商品、圖片與售價。":"選好商品，再到熟悉的平台看看。每個入口都有不同的發現。"}</p></div>
      <div className="flex items-center gap-1 rounded-xl border border-border bg-card p-1" role="group" aria-label="平台類型"><SlidersHorizontal size={13} className="mx-2 text-muted-foreground"/>{["全部","商城","比價"].map(f=><Button key={f} size="sm" variant="ghost" aria-pressed={filter===f} onClick={()=>setFilter(f)} className={filter===f?"bg-white/10 text-foreground hover:bg-white/10":""}>{f}</Button>)}</div>
     </div>
-    {query&&<div role="status" className="mb-6 flex items-start gap-3 rounded-xl border border-violet-300/15 bg-violet-400/5 px-4 py-3 text-xs leading-6 text-violet-100/75"><ExternalLink size={15} className="mt-1 shrink-0"/>目前提供各平台搜尋入口；本站尚未串接即時商品資料，因此不顯示商品預覽或價格。</div>}
+    {query&&<div role="status" className="mb-6 flex items-start gap-3 rounded-xl border border-violet-300/15 bg-violet-400/5 px-4 py-3 text-xs leading-6 text-violet-100/75"><ExternalLink size={15} className="mt-1 shrink-0"/>上方顯示可取得的商品圖片與售價；你也可以直接到下方各平台查看完整搜尋結果。</div>}
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{visible.map(p=><Card key={p.id} className="merchant group overflow-hidden"><CardContent className="p-5">
      <div className="mb-6 flex items-start justify-between"><span style={{color:p.color,background:p.bg,borderColor:p.color+"25"}} className="flex size-12 items-center justify-center rounded-xl border text-lg font-bold">{p.mark}</span><Badge className="border-0 bg-white/4 text-[10px] text-muted-foreground">{p.kind==="商城"?"購物平台":"跨站比價"}</Badge></div>
      <p className="mb-1 text-[9px] tracking-[.18em] text-muted-foreground">{p.en}</p><h3 className="text-base font-semibold">{p.name}</h3><p className="mt-2 text-xs text-muted-foreground">{p.desc}</p>

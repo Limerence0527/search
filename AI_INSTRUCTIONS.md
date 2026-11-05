@@ -63,7 +63,7 @@
 `.cursor/rules/acr-*.mdc` 是從 awesome-cursorrules 原文照錄的通用規則，只作為一般寫法參考。**與本專案規則衝突時，一律以本檔與其他非 `acr-` 規則為準**。已知衝突：
 - 「優先使用 Server Components / SSR、在伺服器端抓資料、Server Actions、伺服器端驗證」→ 本專案是靜態匯出，**沒有伺服器**。互動頁面用 `"use client"`，資料由前端 `fetch` 呼叫 `backend/worker.mjs`。
 - 「用 `next/image` 最佳化、WebP」→ 靜態匯出關閉了最佳化；商品圖來自外部商家，用一般 `<img>`。
-- 「Zod、nuqs、Suspense 包 client component、dynamic import」→ 目前未安裝，除非使用者要求，不要為此新增套件。
+- 「Zod、Suspense 包 client component、dynamic import」→ Zod 目前未安裝，除非使用者要求，不要為此新增套件或重構。
 - 「tailwind.config.js、purge 設定」→ 本專案用 Tailwind v4，設定寫在 `app/globals.css` 的 `@theme`，沒有 config 檔。
 - 「檔案放在 `src/`」→ 本專案沒有 `src/`，直接用 `app/`、`components/`、`lib/`。
 - 「Builder / Repository / Factory / 依賴注入、`types/` 目錄、barrel exports」→ 專案很小，不要為此重構；型別就近定義。

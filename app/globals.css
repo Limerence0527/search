@@ -2,20 +2,22 @@
 @theme inline {
  --color-background: var(--background); --color-foreground: var(--foreground);
  --color-card: var(--card); --color-card-foreground: var(--foreground);
- --color-primary: #8A9A86; --color-primary-foreground: #ffffff;
- --color-muted-foreground: #78746D; --color-border: #EAE5D9; --color-accent: #F0EDE5;
+ --color-primary: #DCE3D6; --color-primary-foreground: #475344;
+ --color-muted-foreground: #756F65; --color-border: #EAE5D9; --color-accent: #EEEAE1;
 }
-:root { --background:#FBF9F5; --foreground:#333333; --card:#ffffff; color-scheme:light; }
+:root { --background:#F7F5F0; --foreground:#45413B; --card:#FAF8F3; color-scheme:light; }
 * { box-sizing:border-box; }
 body { margin:0; font-family:Inter,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif; background:var(--background); color:var(--foreground); -webkit-font-smoothing:antialiased; letter-spacing:.02em; line-height:1.7; }
 button,a,input { -webkit-tap-highlight-color:transparent; }
 button { cursor:pointer; }
-::selection { background:#8A9A8633; }
-.ambient { background:radial-gradient(ellipse 70% 70% at 50% 0%,#8A9A8610,transparent 78%); }
-.grid-lines { background-image:linear-gradient(#8A9A8606 1px,transparent 1px),linear-gradient(90deg,#8A9A8606 1px,transparent 1px); background-size:64px 64px; mask-image:linear-gradient(to bottom,black,transparent); }
-.search-glow:focus-within { border-color:#8A9A86; box-shadow:0 0 0 3px #8A9A8610; }
-.merchant { transition:background .2s,border-color .2s,transform .2s; }
-.merchant:hover { background:#FFFFFF; border-color:#C8B195; transform:translateY(-3px); }
-.merchant:hover .merchant-arrow { color:#65765F; transform:translate(2px,-2px); }
-.merchant-arrow { transition:transform .2s,color .2s; }
+::selection { background:#DCE3D6; color:#45413B; }
+.ambient { background:linear-gradient(180deg,#F2EFE7 0%,#F7F5F0 100%); }
+.search-glow:focus-within { border-color:#A3AD9A; box-shadow:0 0 0 3px #8A9A8610; }
+.merchant { transition:background .2s,border-color .2s; }
+.merchant:hover { background:#F2EFE7; border-color:#DBD4C7; }
+.merchant:hover .merchant-arrow { color:#65765F; }
+.merchant-arrow { transition:color .2s; }
+/* 商品原圖的白底與暖色底融合，降低大面積純白造成的明暗跳差。 */
+.product-media { background:#F0ECE3; border:1px solid #EAE5D9; }
+.product-media img { mix-blend-mode:multiply; }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { transition:none!important; scroll-behavior:auto!important; } }

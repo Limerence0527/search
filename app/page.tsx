@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowRight, ArrowUpRight, Check, Command, ExternalLink, Layers3, Search, ShoppingBag, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, Command, ExternalLink, Layers3, Search, ShoppingBag, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,14 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ProductResults } from "@/components/product-results";
 
 const platforms = [
- {id:"shopee", name:"蝦皮購物", en:"SHOPEE", mark:"蝦", color:"#fb775e", bg:"#fb775e12", kind:"商城", desc:"從日常小物到人氣好物", url:(q:string)=>"https://shopee.tw/search?keyword="+q},
- {id:"momo", name:"momo 購物網", en:"MOMO", mark:"mo", color:"#ed85b4", bg:"#ed85b412", kind:"商城", desc:"品牌家電・生活選物", url:(q:string)=>"https://www.momoshop.com.tw/search/searchShop.jsp?keyword="+q},
- {id:"pchome", name:"PChome 24h", en:"PCHOME", mark:"P", color:"#f9a078", bg:"#f9a07812", kind:"商城", desc:"3C 科技・日常補給", url:(q:string)=>"https://24h.pchome.com.tw/search/?q="+q},
- {id:"yahoo", name:"Yahoo 購物中心", en:"YAHOO", mark:"Y!", color:"#b59afa", bg:"#b59afa12", kind:"商城", desc:"品牌購物・風格生活", url:(q:string)=>"https://tw.buy.yahoo.com/search/product?p="+q},
- {id:"ruten", name:"露天市集", en:"RUTEN", mark:"露", color:"#f5c477", bg:"#f5c47712", kind:"商城", desc:"挖掘收藏與特色商品", url:(q:string)=>"https://www.ruten.com.tw/find/?q="+q},
- {id:"biggo", name:"BigGo 比價", en:"BIGGO", mark:"B", color:"#83adef", bg:"#83adef12", kind:"比價", desc:"跨平台探索商品價格", url:(q:string)=>"https://biggo.com.tw/s/?q="+q},
- {id:"feebee", name:"飛比價格", en:"FEEBEE", mark:"飛", color:"#eed789", bg:"#eed78912", kind:"比價", desc:"多一個價格比較的角度", url:(q:string)=>"https://feebee.com.tw/s/?q="+q},
- {id:"google", name:"Google 購物", en:"GOOGLE SHOPPING", mark:"G", color:"#8fc9bb", bg:"#8fc9bb12", kind:"比價", desc:"探索更多商家的選擇", url:(q:string)=>"https://www.google.com/search?tbm=shop&q="+q}
+ {id:"shopee", name:"蝦皮購物", en:"SHOPEE", mark:"蝦", color:"#9D7768", bg:"#9D776812", kind:"商城", desc:"從日常小物到人氣好物", url:(q:string)=>"https://shopee.tw/search?keyword="+q},
+ {id:"momo", name:"momo 購物網", en:"MOMO", mark:"mo", color:"#9F7D86", bg:"#9F7D8612", kind:"商城", desc:"品牌家電・生活選物", url:(q:string)=>"https://www.momoshop.com.tw/search/searchShop.jsp?keyword="+q},
+ {id:"pchome", name:"PChome 24h", en:"PCHOME", mark:"P", color:"#A68D70", bg:"#A68D7012", kind:"商城", desc:"3C 科技・日常補給", url:(q:string)=>"https://24h.pchome.com.tw/search/?q="+q},
+ {id:"yahoo", name:"Yahoo 購物中心", en:"YAHOO", mark:"Y!", color:"#8B8199", bg:"#8B819912", kind:"商城", desc:"品牌購物・風格生活", url:(q:string)=>"https://tw.buy.yahoo.com/search/product?p="+q},
+ {id:"ruten", name:"露天市集", en:"RUTEN", mark:"露", color:"#9E8B65", bg:"#9E8B6512", kind:"商城", desc:"挖掘收藏與特色商品", url:(q:string)=>"https://www.ruten.com.tw/find/?q="+q},
+ {id:"biggo", name:"BigGo 比價", en:"BIGGO", mark:"B", color:"#7D8E9A", bg:"#7D8E9A12", kind:"比價", desc:"跨平台探索商品價格", url:(q:string)=>"https://biggo.com.tw/s/?q="+q},
+ {id:"feebee", name:"飛比價格", en:"FEEBEE", mark:"飛", color:"#9D9170", bg:"#9D917012", kind:"比價", desc:"多一個價格比較的角度", url:(q:string)=>"https://feebee.com.tw/s/?q="+q},
+ {id:"google", name:"Google 購物", en:"GOOGLE SHOPPING", mark:"G", color:"#7B8F78", bg:"#7B8F7812", kind:"比價", desc:"探索更多商家的選擇", url:(q:string)=>"https://www.google.com/search?tbm=shop&q="+q}
 ];
 const examples=["AirPods Pro 2","Dyson V12","Switch 2","象印 保溫瓶 480ml"];
 export default function Home() {
@@ -26,23 +26,23 @@ export default function Home() {
  return <div className="min-h-screen">
   <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:bg-card focus:p-3">跳到主要內容</a>
   <header className="border-b border-border bg-background/85">
-   <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-5 sm:px-8">
+   <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-6 sm:px-10">
     <a href="./" className="flex items-center gap-3 font-medium tracking-wide"><span className="flex size-9 items-center justify-center rounded-lg border border-[#DCE2D7] bg-[#E8EDE4] text-[#65765F]"><Layers3 size={19}/></span>比價小幫手<span className="hidden text-xs font-normal text-muted-foreground sm:inline">/ find your next favorite</span></a>
     <Button asChild variant="ghost" size="sm"><a href="#platforms">探索平台 <ArrowDown size={13}/></a></Button>
    </div>
   </header>
   <main id="main">
    <section className="ambient relative overflow-hidden border-b border-border">
-    <div aria-hidden className="grid-lines pointer-events-none absolute inset-0"/>
-    <div className="relative mx-auto max-w-4xl px-5 pb-16 pt-16 text-center sm:px-8 sm:pb-20 sm:pt-22">
+    
+    <div className="relative mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:px-10 sm:pb-24 sm:pt-24">
      <Badge className="mb-7 border-[#EAE5D9] bg-[#F1F3EC] text-[#65765F]"><span className="size-1.5 rounded-full bg-[#8A9A86]"/>少一點切換，多一點選擇 <ArrowRight size={12}/></Badge>
-     <h1 className="text-3xl font-medium leading-tight tracking-wide sm:text-5xl">好東西，值得<br className="sm:hidden"/><span className="text-[#8A9A86]">好價格。</span></h1>
+     <h1 className="text-3xl font-medium leading-relaxed tracking-wide sm:text-4xl">好東西，值得<br className="sm:hidden"/><span className="text-[#8A9A86]">好價格。</span></h1>
      <p className="mx-auto mb-9 mt-5 max-w-lg text-sm leading-7 text-muted-foreground sm:text-base">從一個商品名稱開始，探索各大購物平台。<br/>把選擇放在一起，比較商品圖片與售價，找到理想入手方式。</p>
-     <form onSubmit={e=>{e.preventDefault();search(input)}} className="search-glow mx-auto flex max-w-2xl items-center gap-2 rounded-lg border border-[#EAE5D9] bg-white p-2 pl-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-shadow">
+     <form onSubmit={e=>{e.preventDefault();search(input)}} className="search-glow mx-auto flex max-w-2xl items-center gap-2 rounded-lg border border-[#EAE5D9] bg-card p-2 pl-4 transition-colors">
       <Search size={21} className="shrink-0 text-muted-foreground" aria-hidden/>
       <Input ref={inputRef} aria-label="搜尋商品名稱" aria-invalid={!!error} aria-describedby={error?"search-error":undefined} type="search" value={input} onChange={e=>{setInput(e.target.value);setError("")}} placeholder="搜尋品牌、商品或型號…" className="h-12 border-0 px-1 text-sm shadow-none focus-visible:ring-0 sm:text-base"/>
       <kbd className="hidden shrink-0 rounded border border-[#EAE5D9] px-1.5 py-1 text-xs text-muted-foreground sm:flex"><Command size={12}/>K</kbd>
-      <Button type="submit" className="h-12 shrink-0 rounded-lg px-4 sm:px-5">搜尋 <ArrowRight size={16}/></Button>
+      <Button type="submit" className="h-12 shrink-0 rounded-lg px-4 sm:px-6">搜尋 <ArrowRight size={16}/></Button>
      </form>
      {error&&<p role="alert" id="search-error" className="mt-3 text-sm text-[#A05243]">{error}</p>}
      <div className="mt-5 flex flex-wrap items-center justify-center gap-2"><span className="mr-1 text-xs text-muted-foreground">試試搜尋</span>{examples.map(q=><Button key={q} variant="ghost" size="sm" className="h-7 text-xs" onClick={()=>search(q)}>{q}<ArrowUpRight size={11}/></Button>)}</div>
@@ -50,14 +50,14 @@ export default function Home() {
     </div>
    </section>
    <div ref={resultsRef} className="scroll-mt-6"><ProductResults query={query}/></div>
-   <section id="platforms" className="mx-auto max-w-7xl scroll-mt-6 px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="platform-title">
+   <section id="platforms" className="mx-auto max-w-6xl scroll-mt-6 px-6 py-14 sm:px-10 sm:py-20" aria-labelledby="platform-title">
     <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
      <div><p className="mb-2 text-[10px] font-medium tracking-[.24em] text-[#65765F]">EXPLORE THE POSSIBILITIES</p><h2 id="platform-title" className="text-xl font-medium tracking-wide sm:text-2xl">{query?<><span className="text-muted-foreground">搜尋 </span>「{query}」</>:"你的購物探索，從這裡開始"}</h2><p className="mt-2 text-sm text-muted-foreground">{query?"選擇平台，在新分頁查看實際商品、圖片與售價。":"選好商品，再到熟悉的平台看看。每個入口都有不同的發現。"}</p></div>
      <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1" role="group" aria-label="平台類型"><SlidersHorizontal size={13} className="mx-2 text-muted-foreground"/>{["全部","商城","比價"].map(f=><Button key={f} size="sm" variant="ghost" aria-pressed={filter===f} onClick={()=>setFilter(f)} className={filter===f?"bg-[#EAE5D9] text-foreground hover:bg-[#EAE5D9]":""}>{f}</Button>)}</div>
     </div>
     {query&&<div role="status" className="mb-6 flex items-start gap-3 rounded-lg border border-[#EAE5D9] bg-[#F1F3EC] px-4 py-3 text-xs leading-6 text-[#65765F]"><ExternalLink size={15} className="mt-1 shrink-0"/>上方顯示可取得的商品圖片與售價；你也可以直接到下方各平台查看完整搜尋結果。</div>}
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{visible.map(p=><Card key={p.id} className="merchant group overflow-hidden"><CardContent className="p-5">
-     <div className="mb-6 flex items-start justify-between"><span style={{color:p.color,background:p.bg,borderColor:p.color+"25"}} className="flex size-12 items-center justify-center rounded-lg border text-lg font-bold">{p.mark}</span><Badge className="border-0 bg-[#F7F5F0] text-[10px] text-muted-foreground">{p.kind==="商城"?"購物平台":"跨站比價"}</Badge></div>
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{visible.map(p=><Card key={p.id} className="merchant group overflow-hidden"><CardContent className="p-6">
+     <div className="mb-6 flex items-start justify-between"><span style={{color:p.color,background:p.bg,borderColor:p.color+"25"}} className="flex size-12 items-center justify-center rounded-lg border text-lg font-medium">{p.mark}</span><Badge className="border-0 bg-[#F7F5F0] text-[10px] text-muted-foreground">{p.kind==="商城"?"購物平台":"跨站比價"}</Badge></div>
      <p className="mb-1 text-[9px] tracking-[.18em] text-muted-foreground">{p.en}</p><h3 className="text-base font-medium">{p.name}</h3><p className="mt-2 text-xs text-muted-foreground">{p.desc}</p>
      <div className="mt-6 border-t border-border pt-3">{query?<Button asChild variant="ghost" className="h-8 w-full justify-between px-0 text-xs text-foreground hover:bg-transparent"><a href={p.url(encodeURIComponent(query))} target="_blank" rel="noopener noreferrer" aria-label={`前往${p.name}搜尋 ${query}（開新分頁）`}>搜尋這個商品<ArrowUpRight size={16} className="merchant-arrow text-muted-foreground"/></a></Button>:<Button variant="ghost" className="h-8 w-full justify-between px-0 text-xs hover:bg-transparent" onClick={()=>{inputRef.current?.focus();window.scrollTo({top:0,behavior:"smooth"})}}>輸入商品開始<ArrowUpRight size={16} className="merchant-arrow"/></Button>}</div>
     </CardContent></Card>)}</div>
@@ -65,6 +65,6 @@ export default function Home() {
     {!query&&<div className="mt-14 grid gap-6 border-t border-border pt-8 sm:grid-cols-3">{[{icon:Search,title:"01 / 找到想要的",text:"輸入完整型號、容量或尺寸，讓搜尋更貼近你的需求。"},{icon:Layers3,title:"02 / 多看幾個選擇",text:"前往不同商城與比價網，查看商品圖片與實際價格。"},{icon:ShoppingBag,title:"03 / 確認再入手",text:"比較運費、保固與賣家評價，選擇適合自己的購買方式。"}].map(({icon:Icon,title,text})=><div key={title} className="flex gap-3"><Icon size={17} className="mt-1 shrink-0 text-[#8A9A86]"/><div><h3 className="mb-2 text-sm font-medium">{title}</h3><p className="text-xs leading-6 text-muted-foreground">{text}</p></div></div>)}</div>}
    </section>
   </main>
-  <footer className="border-t border-border"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-7 text-xs text-muted-foreground sm:px-8"><span className="flex items-center gap-2"><Layers3 size={14}/>比價小幫手 <span className="text-[#C8B195]">/</span> 更從容地做選擇</span><span>本站不販售商品 · 所有連結導向外部平台</span></div></footer>
+  <footer className="border-t border-border"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-10 text-xs text-muted-foreground sm:px-10"><span className="flex items-center gap-2"><Layers3 size={14}/>比價小幫手 <span className="text-[#C8B195]">/</span> 更從容地做選擇</span><span>本站不販售商品 · 所有連結導向外部平台</span></div></footer>
  </div>;
 }

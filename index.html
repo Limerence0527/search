@@ -108,11 +108,13 @@
         <div id="platformFilter" class="filters"></div>
         <label class="sort">排序
           <select id="sortSel">
+            <option value="relevance">符合程度</option>
             <option value="price-asc">價格低 → 高</option>
             <option value="price-desc">價格高 → 低</option>
           </select>
         </label>
       </div>
+      <div class="gallery-heading"><h3 id="resultCount" aria-live="polite">商品預覽</h3><span>點圖片放大 · 點商品名稱前往賣場</span></div>
       <div id="cards" class="cards"></div>
       <p class="disclaimer">※ 價格、規格由 AI 透過網路搜尋整理，可能與實際頁面有落差（特價、運費、優惠券、庫存等），下單前請點進連結確認。</p>
     </section>
@@ -164,3 +166,4 @@
   <script src="assets/app.js"></script>
 </body>
 </html>
+

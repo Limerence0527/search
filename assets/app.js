@@ -167,6 +167,9 @@
     {
       "platform": "蝦皮購物",
       "title": "商品頁標題",
+      "seller": "賣家或商店名稱；查不到留空字串",
+      "shipping": "運費或免運條件；查不到留空字串",
+      "availability": "庫存或出貨狀態；查不到留空字串",
       "price": 1234,
       "original_price": null,
       "url": "https://...",
@@ -177,7 +180,7 @@
   ]
 }
 \`\`\`
-offers 請依 price 由低到高排序，最多 12 筆。`;
+offers 請優先依商品符合程度排序，最多 24 筆，盡可能涵蓋不同平台與不同商家的個別商品頁。seller、shipping、availability 只能填頁面明確提供的資訊。圖片必須對應該筆商品，不要用平台 Logo。`;
   }
 
   async function callClaude(messages, { useFallback }) {
@@ -282,6 +285,9 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
   function normalizeOffer(o) {
     const n = v => (v === null || v === undefined || v === '') ? null : Number(String(v).replace(/[^\d.]/g, '')) || null;
     return {
+      seller: String(o.seller || ''),
+      shipping: String(o.shipping || ''),
+      availability: String(o.availability || ''),
       platform: String(o.platform || '其他'),
       title: String(o.title || ''),
       price: n(o.price),
@@ -297,7 +303,8 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
     state.offers = r.offers.map(normalizeOffer).filter(o => o.url);
     state.platform = 'all';
     const fallbackImg = safeUrl(r.image);
-    if (fallbackImg) state.offers.forEach(o => { if (!o.image) o.image = fallbackImg; o._sharedImg = o.image === fallbackImg; });
+    // 各賣場圖片獨立顯示，避免將代表圖當成賣場實拍。
+    state.offers.forEach(o => { o._sharedImg = !!fallbackImg && o.image === fallbackImg; });
 
     // 你的照片
     const qp = $('#queryPhoto');
@@ -346,10 +353,14 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
     state.visible = state.offers
       .filter(o => state.platform === 'all' || o.platform === state.platform)
       .sort((a, b) => {
+        if (sortSel.value === 'relevance') return 0;
+        if (!hasPrice(a) && !hasPrice(b)) return 0;
         if (!hasPrice(a)) return 1;
         if (!hasPrice(b)) return -1;
         return (a.price - b.price) * dir;
       });
+    const resultCount = $('#resultCount');
+    if (resultCount) resultCount.textContent = `商品預覽 · ${state.visible.length} 筆`;
     const priced = state.offers.filter(hasPrice);
     const min = priced.length ? Math.min(...priced.map(o => o.price)) : null;
 
@@ -364,16 +375,19 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
       return `<article class="card${best ? ' best' : ''}">
         ${best ? '<span class="ribbon">🏆 最便宜</span>' : ''}
         ${off >= 5 ? `<span class="discount">-${off}%</span>` : ''}
-        <button type="button" class="thumb" data-i="${i}" aria-label="預覽照片">
+        <button type="button" class="thumb" data-i="${i}" aria-label="預覽 ${esc(o.title || o.platform)} 的商品照片">
           ${thumbHtml(o)}
+          ${o._sharedImg ? '<span class="image-label">商品代表圖</span>' : ''}
           <span class="zoom" aria-hidden="true">⤢</span>
         </button>
         <div class="body">
           <span class="pf"><span class="dot" style="background:${platformColor(o.platform)}"></span>${esc(o.platform)}</span>
-          <div class="name" title="${esc(o.title)}">${esc(o.title)}</div>
+          <a class="name" href="${esc(o.url)}" target="_blank" rel="noopener noreferrer" title="${esc(o.title)}">${esc(o.title || '查看商品詳情')}</a>
           ${hasPrice(o)
             ? `<div class="price">${esc(fmtPrice(o.price))}${off ? `<s>${esc(fmtPrice(o.original_price))}</s>` : ''}</div>`
             : '<div class="price na">價格請見連結</div>'}
+          ${o.seller ? `<div class="seller">店家 · ${esc(o.seller)}</div>` : ''}
+          ${o.shipping || o.availability ? `<div class="offer-meta">${[o.shipping, o.availability].filter(Boolean).map(v => `<span>${esc(v)}</span>`).join('')}</div>` : ''}
           ${o.specs.length ? `<div class="specs">${o.specs.slice(0, 3).map(s => `<span>${esc(s)}</span>`).join('')}</div>` : ''}
           ${o.note ? `<div class="note">💡 ${esc(o.note)}</div>` : ''}
           <a class="go" href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">前往 ${esc(o.platform)} →</a>
@@ -382,7 +396,7 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
     }).join('');
   }
 
-  const NOIMG = '<span class="noimg"><b>🛒</b>暫無圖片</span>';
+  const NOIMG = '<span class="noimg"><b>▧</b>商家未提供可用圖片<span>可點擊查看商品資訊</span></span>';
   const thumbHtml = o => o.image
     ? `<img class="offer-img" src="${esc(o.image)}" alt="${esc(o.title)}" loading="lazy" referrerpolicy="no-referrer">`
     : NOIMG;
@@ -440,6 +454,8 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
       ${hasPrice(o)
         ? `<div class="price">${esc(fmtPrice(o.price))}${o.original_price > o.price ? `<s>${esc(fmtPrice(o.original_price))}</s>` : ''}</div>`
         : '<div class="price na">價格請見連結</div>'}
+      ${o.seller ? `<p class="seller">店家 · ${esc(o.seller)}</p>` : ''}
+      ${o.shipping || o.availability ? `<p class="note">${esc([o.shipping, o.availability].filter(Boolean).join(' · '))}</p>` : ''}
       ${o.specs.length ? `<ul>${o.specs.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
       ${o.note ? `<p class="note">💡 ${esc(o.note)}</p>` : ''}
       ${o._sharedImg ? '<p class="muted small">※ 此為商品代表圖，實際以賣場頁面為準</p>' : ''}
@@ -553,3 +569,4 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
   const initQ = new URLSearchParams(location.search).get('q');
   if (initQ) { qInput.value = initQ; renderPlatformLinks(initQ); }
 })();
+

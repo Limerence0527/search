@@ -1,0 +1,4 @@
+:HL["/search/_next/static/css/34b139b15d1d6331.css","style"]
+2:[["children",{"s":"__PAGE__","h":160}]]
+1:[["children",{"s":"_not-found","h":96,"c":"$Q2"}]]
+0:{"b":"4RP8dwWDBe5E0UlJ4fn6g","t":{"t":{"s":"","h":80,"c":"$Q1"}}}

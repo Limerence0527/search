@@ -2,17 +2,18 @@
 (() => {
   'use strict';
 
-  // ---------- 平台搜尋連結（不需 AI 也能用） ----------
+  // ---------- 平台 ----------
   const PLATFORMS = [
-    { id: 'shopee',  name: '蝦皮購物',     icon: '🛍️', url: q => `https://shopee.tw/search?keyword=${q}` },
-    { id: 'momo',    name: 'momo購物網',   icon: '🟣', url: q => `https://www.momoshop.com.tw/search/searchShop.jsp?keyword=${q}` },
-    { id: 'pchome',  name: 'PChome 24h',   icon: '🔴', url: q => `https://24h.pchome.com.tw/search/?q=${q}` },
-    { id: 'yahoo',   name: 'Yahoo購物中心', icon: '🟪', url: q => `https://tw.buy.yahoo.com/search/product?p=${q}` },
-    { id: 'ruten',   name: '露天拍賣',     icon: '🟠', url: q => `https://www.ruten.com.tw/find/?q=${q}` },
-    { id: 'biggo',   name: 'BigGo 比價',   icon: '📊', url: q => `https://biggo.com.tw/s/?q=${q}` },
-    { id: 'feebee',  name: '飛比價格',     icon: '🐝', url: q => `https://feebee.com.tw/s/?q=${q}` },
-    { id: 'google',  name: 'Google 購物',  icon: '🔎', url: q => `https://www.google.com/search?tbm=shop&q=${q}` },
+    { id: 'shopee', name: '蝦皮購物',      logo: '蝦', color: '#ee4d2d', match: /蝦皮|shopee/i, url: q => `https://shopee.tw/search?keyword=${q}` },
+    { id: 'momo',   name: 'momo購物網',    logo: 'mo', color: '#d6006f', match: /momo/i,        url: q => `https://www.momoshop.com.tw/search/searchShop.jsp?keyword=${q}` },
+    { id: 'pchome', name: 'PChome 24h',    logo: 'PC', color: '#e3002b', match: /pchome/i,      url: q => `https://24h.pchome.com.tw/search/?q=${q}` },
+    { id: 'yahoo',  name: 'Yahoo購物中心', logo: 'Y!', color: '#6001d2', match: /yahoo|雅虎/i,  url: q => `https://tw.buy.yahoo.com/search/product?p=${q}` },
+    { id: 'ruten',  name: '露天拍賣',      logo: '露', color: '#f08a00', match: /露天|ruten/i,  url: q => `https://www.ruten.com.tw/find/?q=${q}` },
+    { id: 'biggo',  name: 'BigGo 比價',    logo: 'BG', color: '#1f6feb', match: /biggo/i,       url: q => `https://biggo.com.tw/s/?q=${q}` },
+    { id: 'feebee', name: '飛比價格',      logo: '飛', color: '#f5b400', match: /飛比|feebee/i, url: q => `https://feebee.com.tw/s/?q=${q}` },
+    { id: 'google', name: 'Google 購物',   logo: 'G',  color: '#4285f4', match: /google/i,      url: q => `https://www.google.com/search?tbm=shop&q=${q}` },
   ];
+  const platformColor = name => (PLATFORMS.find(p => p.match.test(name)) || { color: '#8a90a5' }).color;
 
   // ---------- 設定 ----------
   const store = {
@@ -26,54 +27,140 @@
 
   // ---------- DOM ----------
   const $ = s => document.querySelector(s);
-  const form = $('#searchForm'), qInput = $('#q'), btn = $('#searchBtn');
-  const statusEl = $('#status'), aiResult = $('#aiResult'), cardsEl = $('#cards');
-  const summaryEl = $('#summary'), sortSel = $('#sortSel'), filterEl = $('#platformFilter');
-  const dlg = $('#settingsDlg');
+  const form = $('#searchForm'), qInput = $('#q'), btn = $('#searchBtn'), fileInput = $('#fileInput');
+  const statusEl = $('#status'), loadingEl = $('#loading'), aiResult = $('#aiResult'), cardsEl = $('#cards');
+  const sortSel = $('#sortSel'), filterEl = $('#platformFilter');
+  const settingsDlg = $('#settingsDlg'), lightbox = $('#lightbox');
 
-  let offers = [];
-  let activePlatform = 'all';
+  const state = {
+    image: null,      // { dataUrl, base64, mediaType }
+    queryImage: null, // 這次搜尋使用的照片
+    offers: [],
+    visible: [],
+    platform: 'all',
+    lbIndex: 0,
+    lbMode: 'offer',  // 'offer' | 'query'
+  };
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const safeUrl = u => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch { return ''; } };
-  const fmtPrice = n => (typeof n === 'number' && isFinite(n)) ? 'NT$ ' + n.toLocaleString('zh-TW') : '價格請見連結';
+  const fmtPrice = n => 'NT$ ' + Number(n).toLocaleString('zh-TW');
+  const hasPrice = o => typeof o.price === 'number' && isFinite(o.price);
 
+  // ---------- 提示 ----------
   function updateHint() {
-    $('#keyHint').innerHTML = getKey()
-      ? `AI 比價已啟用（${esc(getModel())}）。搜尋約需 30 秒～2 分鐘。`
-      : '尚未設定 AI 金鑰：目前只提供各平台搜尋連結。點右上角「AI 設定」啟用自動比價。';
+    const on = !!getKey();
+    const badge = $('#aiBadge');
+    badge.textContent = on ? 'AI 已啟用' : 'AI 未啟用';
+    badge.classList.toggle('on', on);
+    const hint = $('#keyHint');
+    hint.hidden = on;
+    if (!on) hint.innerHTML = '目前只提供各平台搜尋連結。<button type="button" data-open-settings>設定 AI 金鑰</button> 即可自動比價、以圖搜圖。';
   }
+  document.addEventListener('click', e => { if (e.target.closest('[data-open-settings]')) openSettings(); });
 
-  function renderPlatformLinks(q) {
-    const enc = encodeURIComponent(q);
-    $('#platformLinks').innerHTML = PLATFORMS.map(p =>
-      `<a class="chip" href="${esc(p.url(enc))}" target="_blank" rel="noopener noreferrer">${p.icon} ${esc(p.name)}</a>`
-    ).join('');
-    $('#quickLinks').hidden = false;
-  }
-
-  function setStatus(html, isError = false) {
+  function showStatus(html, isError = false) {
     statusEl.hidden = !html;
     statusEl.classList.toggle('error', isError);
     statusEl.innerHTML = html || '';
   }
 
+  function renderPlatformLinks(q) {
+    if (!q) { $('#quickLinks').hidden = true; return; }
+    const enc = encodeURIComponent(q);
+    $('#platformLinks').innerHTML = PLATFORMS.map(p =>
+      `<a class="plat" href="${esc(p.url(enc))}" target="_blank" rel="noopener noreferrer">
+        <span class="plat-logo" style="background:${p.color}">${esc(p.logo)}</span>${esc(p.name)}<span class="arrow">↗</span>
+      </a>`).join('');
+    $('#quickLinks').hidden = false;
+  }
+
+  // ---------- 以圖搜圖：讀取、壓縮照片 ----------
+  async function setImageFromFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    try {
+      const dataUrl = await resizeImage(file, 1280);
+      state.image = { dataUrl, base64: dataUrl.split(',')[1], mediaType: 'image/jpeg' };
+      $('#imgChipThumb').src = dataUrl;
+      $('#imgChip').hidden = false;
+      qInput.placeholder = '可加上補充說明（選填），例如：要 256G';
+      qInput.focus();
+    } catch {
+      showStatus('⚠️ 無法讀取這張照片，請換一張試試。', true);
+    }
+  }
+
+  function resizeImage(file, max) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('bad image')); };
+      img.src = url;
+    });
+  }
+
+  function clearImage() {
+    state.image = null;
+    $('#imgChip').hidden = true;
+    fileInput.value = '';
+    qInput.placeholder = '例如：AirPods Pro 2、Dyson V12、iPhone 17 256G';
+  }
+
+  fileInput.addEventListener('change', () => setImageFromFile(fileInput.files[0]));
+  $('#imgRemove').addEventListener('click', clearImage);
+
+  // 拖曳
+  let dragDepth = 0;
+  const overlay = $('#dropOverlay');
+  const isFileDrag = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  window.addEventListener('dragenter', e => { if (!isFileDrag(e)) return; e.preventDefault(); dragDepth++; overlay.hidden = false; });
+  window.addEventListener('dragover', e => { if (isFileDrag(e)) e.preventDefault(); });
+  window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; overlay.hidden = true; } });
+  window.addEventListener('drop', e => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault(); dragDepth = 0; overlay.hidden = true;
+    setImageFromFile(e.dataTransfer.files[0]);
+  });
+  // 貼上
+  window.addEventListener('paste', e => {
+    const item = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/'));
+    if (item) { e.preventDefault(); setImageFromFile(item.getAsFile()); }
+  });
+
   // ---------- Claude API ----------
   const API_URL = 'https://api.anthropic.com/v1/messages';
 
-  function buildPrompt(q) {
-    return `你是台灣的購物比價助理。請幫我比價這個商品：「${q}」
+  function buildPrompt(q, withImage) {
+    const target = withImage
+      ? `使用者上傳了一張商品照片${q ? `，補充說明：「${q}」` : ''}。
+請先仔細辨識照片中的商品（品牌、型號、顏色、容量/尺寸等），把辨識結果寫進 "identified"，再用辨識出的名稱去比價。若無法確定型號，就找最接近的款式並在 summary 說明。`
+      : `請幫我比價這個商品：「${q}」`;
+    return `你是台灣的購物比價助理。${target}
 
 步驟：
 1. 用網路搜尋在台灣的購物平台找這個商品（優先：蝦皮購物 shopee.tw、momo購物網 momoshop.com.tw、PChome 24h、Yahoo購物中心、露天拍賣，也可參考 BigGo、飛比等比價網）。
 2. 盡量找到「同一款、同規格」的商品頁面，記下目前售價（新台幣）。規格不同（容量、顏色、版本）請在 note 說明。
-3. 可以用 web_fetch 打開商品頁取得商品圖片網址（如 og:image）與主要規格；抓不到就留空字串，不要編造。
+3. 盡量用 web_fetch 打開商品頁，取得商品圖片網址（例如 og:image 或主圖）與主要規格；抓不到就留空字串，不要編造。
 4. 只放你實際在搜尋結果或頁面中看到的連結與價格，不可捏造 URL 或價格。找不到價格時 price 設為 null。
 
 最後只輸出一個 \`\`\`json 程式碼區塊，格式如下（不要其他多餘文字）：
 \`\`\`json
 {
+  "identified": ${withImage ? '"從照片辨識出的商品（品牌 型號 規格）"' : 'null'},
   "product": "標準化的商品名稱",
+  "image": "代表此商品的圖片網址，或空字串",
   "specs": ["共通主要規格1", "規格2"],
   "summary": "2~4 句中文結論：哪裡最便宜、價差多少、購買建議（例如注意運費、官方/平行輸入、二手）",
   "offers": [
@@ -122,35 +209,34 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
     const res = await fetch(API_URL, { method: 'POST', headers, body: JSON.stringify(body) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = data?.error?.message || `HTTP ${res.status}`;
-      const err = new Error(msg);
+      const err = new Error(data?.error?.message || `HTTP ${res.status}`);
       err.status = res.status;
       throw err;
     }
     return data;
   }
 
-  async function aiSearch(q) {
-    const messages = [{ role: 'user', content: buildPrompt(q) }];
+  async function aiSearch(q, image) {
+    const content = [];
+    if (image) content.push({ type: 'image', source: { type: 'base64', media_type: image.mediaType, data: image.base64 } });
+    content.push({ type: 'text', text: buildPrompt(q, !!image) });
+    const messages = [{ role: 'user', content }];
+
     let useFallback = true;
-    let steps = 0;
+    let rounds = 0;
     while (true) {
       let resp;
       try {
         resp = await callClaude(messages, { useFallback });
       } catch (e) {
-        // 若帳號/模型不支援 fallbacks 參數，改用不帶 fallbacks 的請求重試一次
-        if (useFallback && e.status === 400 && /fallback/i.test(e.message)) {
-          useFallback = false;
-          continue;
-        }
+        // 若帳號/模型不支援 fallbacks 參數，改用不帶 fallbacks 的請求重試
+        if (useFallback && e.status === 400 && /fallback/i.test(e.message)) { useFallback = false; continue; }
         throw e;
       }
-      if (resp.stop_reason === 'refusal') throw new Error('AI 拒絕了這次請求，請換個關鍵字再試。');
-      // 伺服器端工具執行太久會回 pause_turn，把內容接回去繼續
-      if (resp.stop_reason === 'pause_turn' && steps++ < 4) {
+      if (resp.stop_reason === 'refusal') throw new Error('AI 拒絕了這次請求，請換個關鍵字或照片再試。');
+      // 伺服器端工具執行較久會回 pause_turn，把內容接回去繼續
+      if (resp.stop_reason === 'pause_turn' && rounds++ < 4) {
         messages.push({ role: 'assistant', content: resp.content });
-        setStatus(`<span class="spinner"></span>AI 仍在搜尋中…（第 ${steps + 1} 輪）`);
         continue;
       }
       const text = (resp.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
@@ -174,6 +260,24 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
     }
   }
 
+  // ---------- 載入動畫 ----------
+  let timer = null;
+  function startLoading(withImage) {
+    const t0 = Date.now();
+    const steps = withImage
+      ? ['正在辨識照片中的商品…', '搜尋各平台價格中…', '整理價格、照片與規格…']
+      : ['搜尋各平台價格中…', '比對商品規格…', '整理價格、照片與規格…'];
+    loadingEl.hidden = false;
+    const tick = () => {
+      const s = Math.floor((Date.now() - t0) / 1000);
+      $('#loadingText').textContent = steps[Math.min(steps.length - 1, Math.floor(s / 20))];
+      $('#elapsed').textContent = `已經過 ${s} 秒（通常 30 秒～2 分鐘）`;
+    };
+    tick();
+    timer = setInterval(tick, 1000);
+  }
+  function stopLoading() { clearInterval(timer); loadingEl.hidden = true; }
+
   // ---------- 顯示結果 ----------
   function normalizeOffer(o) {
     const n = v => (v === null || v === undefined || v === '') ? null : Number(String(v).replace(/[^\d.]/g, '')) || null;
@@ -189,103 +293,248 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
     };
   }
 
-  function renderResult(r) {
-    offers = r.offers.map(normalizeOffer).filter(o => o.url);
-    activePlatform = 'all';
+  function renderResult(r, query) {
+    state.offers = r.offers.map(normalizeOffer).filter(o => o.url);
+    state.platform = 'all';
+    const fallbackImg = safeUrl(r.image);
+    if (fallbackImg) state.offers.forEach(o => { if (!o.image) o.image = fallbackImg; o._sharedImg = o.image === fallbackImg; });
 
-    const specs = Array.isArray(r.specs) && r.specs.length ? `\n規格：${r.specs.map(String).join('、')}` : '';
-    summaryEl.textContent = `${r.product ? '📦 ' + r.product + '\n' : ''}${r.summary || ''}${specs}`;
+    // 你的照片
+    const qp = $('#queryPhoto');
+    qp.hidden = !state.queryImage;
+    if (state.queryImage) $('#queryPhotoImg').src = state.queryImage.dataUrl;
 
-    const platforms = [...new Set(offers.map(o => o.platform))];
-    filterEl.innerHTML = ['all', ...platforms].map(p =>
-      `<button type="button" class="chip${p === 'all' ? ' on' : ''}" data-p="${esc(p)}">${p === 'all' ? '全部' : esc(p)}</button>`
-    ).join('');
+    const idEl = $('#identified');
+    idEl.hidden = !(state.queryImage && r.identified);
+    idEl.textContent = r.identified ? '📷 AI 辨識：' + r.identified : '';
+
+    $('#productName').textContent = r.product || query || '搜尋結果';
+    $('#productSpecs').innerHTML = (Array.isArray(r.specs) ? r.specs : []).slice(0, 8).map(s => `<span class="tag">${esc(s)}</span>`).join('');
+    $('#summary').textContent = r.summary || '';
+
+    // 最低價
+    const priced = state.offers.filter(hasPrice).sort((a, b) => a.price - b.price);
+    const bestBox = $('#bestBox');
+    if (priced.length) {
+      const best = priced[0], worst = priced[priced.length - 1];
+      const save = worst.price - best.price;
+      bestBox.innerHTML = `
+        <span class="lbl">🏆 最低價</span>
+        <span class="p">${esc(fmtPrice(best.price))}</span>
+        <span class="where">${esc(best.platform)}</span>
+        ${save > 0 ? `<span class="save">比最高價省 ${esc(fmtPrice(save))}</span>` : ''}
+        <a href="${esc(best.url)}" target="_blank" rel="noopener noreferrer">前往購買 →</a>`;
+      bestBox.hidden = false;
+    } else {
+      bestBox.hidden = true;
+    }
+
+    // 平台篩選
+    const counts = {};
+    state.offers.forEach(o => { counts[o.platform] = (counts[o.platform] || 0) + 1; });
+    filterEl.innerHTML = [['all', '全部', state.offers.length], ...Object.entries(counts).map(([k, v]) => [k, k, v])]
+      .map(([k, label, n]) => `<button type="button" class="filter${k === 'all' ? ' on' : ''}" data-p="${esc(k)}">${esc(label)}<span class="n">${n}</span></button>`)
+      .join('');
 
     aiResult.hidden = false;
     renderCards();
+    aiResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function renderCards() {
     const dir = sortSel.value === 'price-desc' ? -1 : 1;
-    const list = offers
-      .filter(o => activePlatform === 'all' || o.platform === activePlatform)
+    state.visible = state.offers
+      .filter(o => state.platform === 'all' || o.platform === state.platform)
       .sort((a, b) => {
-        if (a.price === null) return 1;
-        if (b.price === null) return -1;
+        if (!hasPrice(a)) return 1;
+        if (!hasPrice(b)) return -1;
         return (a.price - b.price) * dir;
       });
-    const priced = offers.filter(o => o.price !== null);
+    const priced = state.offers.filter(hasPrice);
     const min = priced.length ? Math.min(...priced.map(o => o.price)) : null;
 
-    if (!list.length) {
-      cardsEl.innerHTML = '<p class="muted">沒有找到可用的商品連結，請試試上方的平台搜尋連結。</p>';
+    if (!state.visible.length) {
+      cardsEl.innerHTML = '<p class="empty">沒有找到可用的商品連結，請試試上方「到各平台查看」。</p>';
       return;
     }
-    cardsEl.innerHTML = list.map(o => {
+    cardsEl.innerHTML = state.visible.map((o, i) => {
       const best = min !== null && o.price === min;
-      const img = o.image
-        ? `<img src="${esc(o.image)}" alt="${esc(o.title)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'noimg',textContent:'🛒'}))">`
-        : '<span class="noimg">🛒</span>';
-      const orig = o.original_price && o.price && o.original_price > o.price
-        ? `<small><s>${esc(fmtPrice(o.original_price))}</s></small>` : '';
+      const off = o.original_price && hasPrice(o) && o.original_price > o.price
+        ? Math.round((1 - o.price / o.original_price) * 100) : 0;
       return `<article class="card${best ? ' best' : ''}">
-        ${best ? '<span class="badge-best">最便宜</span>' : ''}
-        <div class="thumb">${img}</div>
+        ${best ? '<span class="ribbon">🏆 最便宜</span>' : ''}
+        ${off >= 5 ? `<span class="discount">-${off}%</span>` : ''}
+        <button type="button" class="thumb" data-i="${i}" aria-label="預覽照片">
+          ${thumbHtml(o)}
+          <span class="zoom" aria-hidden="true">⤢</span>
+        </button>
         <div class="body">
-          <div class="platform">${esc(o.platform)}</div>
+          <span class="pf"><span class="dot" style="background:${platformColor(o.platform)}"></span>${esc(o.platform)}</span>
           <div class="name" title="${esc(o.title)}">${esc(o.title)}</div>
-          <div class="price">${esc(fmtPrice(o.price))}${orig}</div>
-          ${o.specs.length ? `<ul class="specs">${o.specs.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
+          ${hasPrice(o)
+            ? `<div class="price">${esc(fmtPrice(o.price))}${off ? `<s>${esc(fmtPrice(o.original_price))}</s>` : ''}</div>`
+            : '<div class="price na">價格請見連結</div>'}
+          ${o.specs.length ? `<div class="specs">${o.specs.slice(0, 3).map(s => `<span>${esc(s)}</span>`).join('')}</div>` : ''}
           ${o.note ? `<div class="note">💡 ${esc(o.note)}</div>` : ''}
-          <a class="go" href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">前往購買 →</a>
+          <a class="go" href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">前往 ${esc(o.platform)} →</a>
         </div>
       </article>`;
     }).join('');
   }
 
-  // ---------- 事件 ----------
+  const NOIMG = '<span class="noimg"><b>🛒</b>暫無圖片</span>';
+  const thumbHtml = o => o.image
+    ? `<img class="offer-img" src="${esc(o.image)}" alt="${esc(o.title)}" loading="lazy" referrerpolicy="no-referrer">`
+    : NOIMG;
+
+  // 圖片載入失敗（防盜連等）時改顯示預設圖
+  document.addEventListener('error', e => {
+    const img = e.target;
+    if (img instanceof HTMLImageElement && img.classList.contains('offer-img')) {
+      const span = document.createElement('span');
+      span.innerHTML = NOIMG;
+      img.replaceWith(span.firstChild);
+    }
+  }, true);
+
+  // ---------- 照片預覽 ----------
+  function openLightbox(index) {
+    state.lbMode = 'offer';
+    state.lbIndex = index;
+    renderLightbox();
+    if (!lightbox.open) lightbox.showModal();
+  }
+  function openQueryPhoto() {
+    state.lbMode = 'query';
+    renderLightbox();
+    if (!lightbox.open) lightbox.showModal();
+  }
+
+  function renderLightbox() {
+    const media = $('#lbMedia'), info = $('#lbInfo');
+    const many = state.lbMode === 'offer' && state.visible.length > 1;
+    $('#lbPrev').hidden = $('#lbNext').hidden = !many;
+
+    if (state.lbMode === 'query') {
+      media.innerHTML = `<div class="lb-pane"><img src="${esc(state.queryImage.dataUrl)}" alt="你上傳的照片"></div>`;
+      const ident = $('#identified').textContent;
+      info.innerHTML = `<span class="counter">你上傳的照片</span>
+        <h3>${esc($('#productName').textContent)}</h3>
+        ${ident ? `<p class="muted">${esc(ident)}</p>` : ''}
+        <p class="muted small">點商品卡片的照片，可以和找到的商品並排比對是否為同一款。</p>`;
+      return;
+    }
+
+    const o = state.visible[state.lbIndex];
+    if (!o) return;
+    const offerPane = `<div class="lb-pane">${state.queryImage ? '<span class="cap">平台商品</span>' : ''}${
+      o.image ? `<img class="offer-img" src="${esc(o.image)}" alt="${esc(o.title)}" referrerpolicy="no-referrer">` : NOIMG}</div>`;
+    const queryPane = state.queryImage
+      ? `<div class="lb-pane"><span class="cap">你的照片</span><img src="${esc(state.queryImage.dataUrl)}" alt="你上傳的照片"></div>` : '';
+    media.innerHTML = offerPane + queryPane;
+
+    info.innerHTML = `
+      <span class="counter">${state.lbIndex + 1} / ${state.visible.length}</span>
+      <span class="pf"><span class="dot" style="background:${platformColor(o.platform)}"></span>${esc(o.platform)}</span>
+      <h3>${esc(o.title)}</h3>
+      ${hasPrice(o)
+        ? `<div class="price">${esc(fmtPrice(o.price))}${o.original_price > o.price ? `<s>${esc(fmtPrice(o.original_price))}</s>` : ''}</div>`
+        : '<div class="price na">價格請見連結</div>'}
+      ${o.specs.length ? `<ul>${o.specs.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
+      ${o.note ? `<p class="note">💡 ${esc(o.note)}</p>` : ''}
+      ${o._sharedImg ? '<p class="muted small">※ 此為商品代表圖，實際以賣場頁面為準</p>' : ''}
+      <a class="go" href="${esc(o.url)}" target="_blank" rel="noopener noreferrer">前往 ${esc(o.platform)} 購買 →</a>`;
+  }
+
+  function lbStep(d) {
+    if (state.lbMode !== 'offer' || !state.visible.length) return;
+    state.lbIndex = (state.lbIndex + d + state.visible.length) % state.visible.length;
+    renderLightbox();
+  }
+
+  cardsEl.addEventListener('click', e => {
+    const t = e.target.closest('.thumb[data-i]');
+    if (t) openLightbox(Number(t.dataset.i));
+  });
+  $('#queryPhoto').addEventListener('click', openQueryPhoto);
+  $('#lbClose').addEventListener('click', () => lightbox.close());
+  $('#lbPrev').addEventListener('click', () => lbStep(-1));
+  $('#lbNext').addEventListener('click', () => lbStep(1));
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.close(); });
+  lightbox.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft') lbStep(-1);
+    if (e.key === 'ArrowRight') lbStep(1);
+  });
+  // 手機左右滑動切換
+  let touchX = null;
+  lightbox.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  lightbox.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 50) lbStep(dx < 0 ? 1 : -1);
+    touchX = null;
+  });
+
+  // ---------- 搜尋 ----------
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const q = qInput.value.trim();
-    if (!q) return;
+    const image = state.image;
+    if (!q && !image) { qInput.focus(); return; }
+
     renderPlatformLinks(q);
     aiResult.hidden = true;
+    showStatus('');
 
     if (!getKey()) {
-      setStatus('已列出各平台搜尋連結。想要 AI 自動整理價格、照片與規格，請到「AI 設定」輸入 Claude API Key。');
+      showStatus(image
+        ? '📷 以圖搜圖需要 AI 辨識照片。請先 <a href="#" data-open-settings>設定 Claude API 金鑰</a>，或手動用 <a href="https://lens.google.com/" target="_blank" rel="noopener">Google 智慧鏡頭</a> 上傳照片查詢。'
+        : '已列出各平台搜尋連結。想要 AI 自動整理價格、照片與規格，請 <a href="#" data-open-settings>設定 Claude API 金鑰</a>。');
       return;
     }
+
+    state.queryImage = image;
     btn.disabled = true;
-    setStatus('<span class="spinner"></span>AI 正在搜尋各平台價格，約需 30 秒～2 分鐘…');
+    startLoading(!!image);
     try {
-      const r = await aiSearch(q);
-      setStatus('');
-      renderResult(r);
+      const r = await aiSearch(q, image);
+      stopLoading();
+      if (!q && r.product) renderPlatformLinks(r.product);
+      renderResult(r, q);
     } catch (err) {
-      const m = err.status === 401 ? 'API Key 無效，請到「AI 設定」重新輸入。'
+      stopLoading();
+      const m = err.status === 401 ? 'API 金鑰無效，請到「AI 設定」重新輸入。'
         : err.status === 429 ? '請求太頻繁或額度不足，請稍後再試。'
         : (err.message || '發生錯誤');
-      setStatus('⚠️ ' + esc(m) + '　你仍可使用上方的平台搜尋連結。', true);
+      showStatus('⚠️ ' + esc(m) + (q ? '　你仍可使用上方的平台搜尋連結。' : ''), true);
     } finally {
       btn.disabled = false;
     }
   });
 
+  document.querySelectorAll('.ex').forEach(b => b.addEventListener('click', () => {
+    qInput.value = b.textContent;
+    form.requestSubmit();
+  }));
+
   sortSel.addEventListener('change', renderCards);
   filterEl.addEventListener('click', e => {
     const b = e.target.closest('[data-p]');
     if (!b) return;
-    activePlatform = b.dataset.p;
-    filterEl.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === b));
+    state.platform = b.dataset.p;
+    filterEl.querySelectorAll('.filter').forEach(c => c.classList.toggle('on', c === b));
     renderCards();
   });
 
-  $('#settingsBtn').addEventListener('click', () => {
+  // ---------- 設定 ----------
+  function openSettings() {
     $('#apiKey').value = getKey();
     $('#modelSel').value = getModel();
     $('#maxUses').value = getMaxUses();
-    dlg.showModal();
-  });
+    settingsDlg.showModal();
+  }
+  document.addEventListener('click', e => { if (e.target.closest('a[data-open-settings]')) e.preventDefault(); });
+  $('#settingsBtn').addEventListener('click', openSettings);
   $('#saveSettings').addEventListener('click', () => {
     const k = $('#apiKey').value.trim();
     k ? store.set('cp.apiKey', k) : store.del('cp.apiKey');
@@ -300,7 +549,7 @@ offers 請依 price 由低到高排序，最多 12 筆。`;
   });
 
   // 支援網址參數 ?q=商品
-  const initQ = new URLSearchParams(location.search).get('q');
   updateHint();
+  const initQ = new URLSearchParams(location.search).get('q');
   if (initQ) { qInput.value = initQ; renderPlatformLinks(initQ); }
 })();

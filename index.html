@@ -4,73 +4,161 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>比價小幫手</title>
-  <meta name="description" content="輸入商品名稱，AI 幫你比較蝦皮、momo、PChome 等平台價格，找出最便宜的購買管道。">
+  <meta name="description" content="輸入商品名稱或上傳照片，AI 幫你比較蝦皮、momo、PChome 等平台價格，找出最便宜的購買管道。">
+  <meta name="theme-color" content="#ff5a36">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <h1 class="logo">🔍 比價小幫手</h1>
-      <button id="settingsBtn" class="ghost" type="button">⚙️ AI 設定</button>
+      <a class="logo" href="./">
+        <span class="logo-mark">🏷️</span>
+        <span>比價小幫手</span>
+      </a>
+      <button id="settingsBtn" class="btn-ghost" type="button" aria-label="AI 設定">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm8.94 3a8.94 8.94 0 0 0-.17-1.6l2.1-1.64-2-3.46-2.5 1a9 9 0 0 0-2.77-1.6L15.2 1h-4l-.4 2.7a9 9 0 0 0-2.77 1.6l-2.5-1-2 3.46 2.1 1.64a9 9 0 0 0 0 3.2l-2.1 1.64 2 3.46 2.5-1a9 9 0 0 0 2.77 1.6l.4 2.7h4l.4-2.7a9 9 0 0 0 2.77-1.6l2.5 1 2-3.46-2.1-1.64c.11-.52.17-1.06.17-1.6Z"/></svg>
+        <span id="aiBadge" class="ai-badge">AI 未啟用</span>
+      </button>
     </div>
   </header>
 
-  <main class="wrap">
-    <form id="searchForm" class="search" autocomplete="off">
-      <input id="q" type="search" placeholder="輸入商品名稱，例如：AirPods Pro 2、Dyson V12、iPhone 17 256G" required>
-      <button type="submit" id="searchBtn">搜尋比價</button>
-    </form>
-    <p id="keyHint" class="hint"></p>
+  <section class="hero">
+    <div class="wrap">
+      <h1>同一件商品，<span class="hl">哪裡買最便宜？</span></h1>
+      <p class="sub">輸入名稱或<strong>直接拍照</strong>，AI 幫你比對蝦皮、momo、PChome 等平台價格</p>
 
-    <section id="quickLinks" class="quick" hidden>
-      <h2>直接到各平台搜尋</h2>
-      <div id="platformLinks" class="chips"></div>
+      <form id="searchForm" class="searchbox" autocomplete="off">
+        <div id="imgChip" class="img-chip" hidden>
+          <img id="imgChipThumb" alt="上傳的照片">
+          <button type="button" id="imgRemove" class="img-remove" aria-label="移除照片">✕</button>
+        </div>
+        <input id="q" type="search" placeholder="例如：AirPods Pro 2、Dyson V12、iPhone 17 256G" enterkeyhint="search">
+        <label class="icon-btn" title="以圖搜圖：上傳或拍照">
+          <input id="fileInput" type="file" accept="image/*" hidden>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M9 3 7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.17L15 3H9Zm3 5a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+          <span class="sr-only">以圖搜圖</span>
+        </label>
+        <button type="submit" id="searchBtn" class="btn-primary">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M10 2a8 8 0 0 1 6.32 12.9l5.39 5.39-1.42 1.42-5.39-5.39A8 8 0 1 1 10 2Zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z"/></svg>
+          <span>比價</span>
+        </button>
+      </form>
+      <p class="tip">💡 也可以把照片<strong>拖曳</strong>到這裡，或按 <kbd>Ctrl</kbd>+<kbd>V</kbd> 貼上截圖</p>
+      <p id="keyHint" class="key-hint" hidden></p>
+
+      <div class="examples" id="examples">
+        <span>熱門：</span>
+        <button type="button" class="ex">AirPods Pro 2</button>
+        <button type="button" class="ex">Dyson V12</button>
+        <button type="button" class="ex">Switch 2</button>
+        <button type="button" class="ex">象印 保溫瓶 480ml</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="dropOverlay" class="drop-overlay" hidden>
+    <div class="drop-box">📷<br>放開以上傳照片搜尋</div>
+  </div>
+
+  <main class="wrap main">
+    <section id="quickLinks" class="panel quick" hidden>
+      <div class="panel-head">
+        <h2>到各平台查看</h2>
+        <span class="muted small">開新分頁到各平台搜尋</span>
+      </div>
+      <div id="platformLinks" class="platforms"></div>
+    </section>
+
+    <section id="loading" hidden>
+      <div class="loading-bar">
+        <span class="spinner"></span>
+        <span id="loadingText">AI 正在搜尋各平台價格…</span>
+        <span id="elapsed" class="muted small"></span>
+      </div>
+      <div class="cards">
+        <div class="card skel"><div class="thumb"></div><div class="body"><i></i><i></i><i class="short"></i></div></div>
+        <div class="card skel"><div class="thumb"></div><div class="body"><i></i><i></i><i class="short"></i></div></div>
+        <div class="card skel"><div class="thumb"></div><div class="body"><i></i><i></i><i class="short"></i></div></div>
+        <div class="card skel"><div class="thumb"></div><div class="body"><i></i><i></i><i class="short"></i></div></div>
+      </div>
     </section>
 
     <section id="status" class="status" hidden></section>
 
     <section id="aiResult" hidden>
-      <div id="summary" class="summary"></div>
+      <div class="result-head panel">
+        <button type="button" id="queryPhoto" class="query-photo" hidden title="查看你上傳的照片">
+          <img id="queryPhotoImg" alt="你上傳的照片">
+          <span>你的照片</span>
+        </button>
+        <div class="result-info">
+          <div id="identified" class="identified" hidden></div>
+          <h2 id="productName"></h2>
+          <div id="productSpecs" class="tags"></div>
+          <p id="summary" class="summary"></p>
+        </div>
+        <div id="bestBox" class="best-box" hidden></div>
+      </div>
+
       <div class="toolbar">
-        <label>排序
+        <div id="platformFilter" class="filters"></div>
+        <label class="sort">排序
           <select id="sortSel">
-            <option value="price-asc">價格：低 → 高</option>
-            <option value="price-desc">價格：高 → 低</option>
+            <option value="price-asc">價格低 → 高</option>
+            <option value="price-desc">價格高 → 低</option>
           </select>
         </label>
-        <div id="platformFilter" class="chips small"></div>
       </div>
       <div id="cards" class="cards"></div>
       <p class="disclaimer">※ 價格、規格由 AI 透過網路搜尋整理，可能與實際頁面有落差（特價、運費、優惠券、庫存等），下單前請點進連結確認。</p>
     </section>
   </main>
 
-  <dialog id="settingsDlg">
+  <!-- 照片預覽 -->
+  <dialog id="lightbox" class="lightbox">
+    <button type="button" class="lb-close" id="lbClose" aria-label="關閉">✕</button>
+    <button type="button" class="lb-nav prev" id="lbPrev" aria-label="上一個">‹</button>
+    <button type="button" class="lb-nav next" id="lbNext" aria-label="下一個">›</button>
+    <div class="lb-inner">
+      <div class="lb-media" id="lbMedia"></div>
+      <div class="lb-info" id="lbInfo"></div>
+    </div>
+  </dialog>
+
+  <!-- 設定 -->
+  <dialog id="settingsDlg" class="sheet">
     <form method="dialog" id="settingsForm">
-      <h2>AI 設定</h2>
-      <p class="muted">使用 Anthropic Claude API（含網路搜尋）自動比價。金鑰只會存在你這台瀏覽器的 localStorage，直接送到 api.anthropic.com，不會經過其他伺服器。</p>
-      <label>Claude API Key
+      <div class="sheet-head">
+        <h2>AI 設定</h2>
+        <button value="cancel" class="btn-icon" aria-label="關閉" formnovalidate>✕</button>
+      </div>
+      <p class="muted small">使用 Anthropic Claude API（看圖辨識 + 網路搜尋）自動比價。金鑰只存在這台瀏覽器，直接送到 api.anthropic.com，不經過其他伺服器。</p>
+      <label class="field">Claude API Key
         <input id="apiKey" type="password" placeholder="sk-ant-..." autocomplete="off">
       </label>
-      <label>模型
+      <label class="field">模型
         <select id="modelSel">
           <option value="claude-opus-5-5">Claude Opus 5.5（最準確）</option>
           <option value="claude-sonnet-5-5">Claude Sonnet 5.5（較省錢、較快）</option>
         </select>
       </label>
-      <label>每次最多搜尋次數
+      <label class="field">每次最多搜尋次數
         <input id="maxUses" type="number" min="1" max="15" value="6">
       </label>
-      <p class="muted">沒有金鑰也能用：會提供各購物平台的搜尋連結。到 <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> 申請金鑰。</p>
-      <div class="dlg-actions">
-        <button type="button" id="clearKey" class="ghost">清除金鑰</button>
-        <button value="save" id="saveSettings">儲存</button>
+      <p class="muted small">沒有金鑰也能用文字搜尋（提供各平台連結）。以圖搜圖需要 AI。到 <a href="https://console.anthropic.com/" target="_blank" rel="noopener">console.anthropic.com</a> 申請金鑰。</p>
+      <div class="sheet-actions">
+        <button type="button" id="clearKey" class="btn-ghost">清除金鑰</button>
+        <button value="save" id="saveSettings" class="btn-primary">儲存</button>
       </div>
     </form>
   </dialog>
 
-  <footer class="wrap foot">
-    <span>以 GitHub Pages 架設 · 本站不販售商品，連結導向各平台</span>
+  <footer class="foot">
+    <div class="wrap">以 GitHub Pages 架設 · 本站不販售商品，連結皆導向各購物平台</div>
   </footer>
 
   <script src="assets/app.js"></script>
